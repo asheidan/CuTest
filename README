@@ -1,0 +1,24 @@
+Getting Started
+
+To add unit testing to your C code the only files you need are
+CuTest.c and CuTest.h. 
+
+CuTestTest.c and AllTests.c have been included to provide an
+example of how to write unit tests and then how to aggregate them
+into suites and into a single AllTests.c file. Suites allow you
+to put unit tests for different parts of your code in different
+files. AllTests.c combines all the suites and runs them. 
+
+You should not have to look inside CuTest.c. Looking in
+CuTestTest.c (for example usage) should be sufficient. 
+
+After downloading the sources, run your compiler to create an
+executable called AllTests.exe. For example, if you are using
+Windows with the cl.exe compiler you would type: 
+
+  cl.exe AllTests.c CuTest.c CuTestTest.c
+  AllTests.exe
+
+This will run all the unit tests associated with CuTest and print
+the output on the console. You can replace cl.exe with gcc or
+your favorite compiler in the command above.
