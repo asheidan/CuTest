@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/local/bin/bash
 
 # Auto generate single AllTests file for CuTest.
 # Searches through all *.c files in the current directory.
@@ -10,7 +10,7 @@ echo '
 
 /* This is auto-generated code. Edit at your own peril. */
 
-#include "cutest.h"
+#include "CuTest.h"
 
 '
 
