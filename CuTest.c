@@ -144,7 +144,7 @@ void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual)
 {
 	char buf[STRING_MAX];
 	if (expected == actual) return;
-	sprintf(buf, "expected pointer <0x%X> but was <0x%X>", expected, actual);
+	sprintf(buf, "expected pointer <0x%p> but was <0x%p>", expected, actual);
 	CuFail(tc, buf);
 }
 
@@ -152,7 +152,7 @@ void CuAssertPtrNotNull(CuTest* tc, void* pointer)
 {
 	char buf[STRING_MAX];
 	if (pointer != NULL ) return;
-	sprintf(buf, "null pointer unexpected", pointer);
+	sprintf(buf, "null pointer unexpected");
 	CuFail(tc, buf);
 }
 

@@ -125,6 +125,62 @@ void TestCuAssert(CuTest* tc)
 	CuAssert(&tc2, "test 4", 0);
 	CuAssertTrue(tc, tc2.failed);
 	CuAssertStrEquals(tc, "test 4", tc2.message);
+
+}
+
+void TestCuAssertPtrEquals_Success(CuTest* tc)
+{
+	CuTest tc2;
+	int x;
+	char expected_message[STRING_MAX];
+
+	CuTestInit(&tc2, "MyTest", TestPasses);
+
+	/* test success case */
+	CuAssertPtrEquals(&tc2, &x, &x);
+	CuAssertTrue(tc, ! tc2.failed);
+	CuAssertTrue(tc, NULL == tc2.message);
+}
+
+void TestCuAssertPtrEquals_Failure(CuTest* tc)
+{
+	CuTest tc2;
+	int x;
+	char expected_message[STRING_MAX];
+
+	CuTestInit(&tc2, "MyTest", TestPasses);
+
+	/* test failing case */
+	sprintf(&expected_message, "expected pointer <0x%p> but was <0x%p>", NULL, &x);
+	CuAssertPtrEquals(&tc2, NULL, &x);
+	CuAssertTrue(tc, tc2.failed);
+	CuAssertStrEquals(tc, expected_message, tc2.message);
+}
+
+void TestCuAssertPtrNotNull_Success(CuTest* tc)
+{
+	CuTest tc2;
+	int x;
+
+	CuTestInit(&tc2, "MyTest", TestPasses);
+
+	/* test success case */
+	CuAssertPtrNotNull(&tc2, &x);
+	CuAssertTrue(tc, ! tc2.failed);
+	CuAssertTrue(tc, NULL == tc2.message);
+}
+
+void TestCuAssertPtrNotNull_Failure(CuTest* tc)
+{
+	CuTest tc2;
+	int x;
+
+	CuTestInit(&tc2, "MyTest", TestPasses);
+
+	/* test failing case */
+	CuAssertPtrNotNull(&tc2, NULL);
+	CuAssertTrue(tc, tc2.failed);
+	CuAssertStrEquals(tc, "null pointer unexpected", tc2.message);
 }
 
 void TestCuTestRun(CuTest* tc)
@@ -436,6 +492,10 @@ CuSuite* CuGetSuite(void)
 	SUITE_ADD_TEST(suite, TestCuTestNew);
 	SUITE_ADD_TEST(suite, TestCuTestInit);
 	SUITE_ADD_TEST(suite, TestCuAssert);
+	SUITE_ADD_TEST(suite, TestCuAssertPtrEquals_Success);
+	SUITE_ADD_TEST(suite, TestCuAssertPtrEquals_Failure);
+	SUITE_ADD_TEST(suite, TestCuAssertPtrNotNull_Success);
+	SUITE_ADD_TEST(suite, TestCuAssertPtrNotNull_Failure);
 	SUITE_ADD_TEST(suite, TestCuTestRun);
 
 	SUITE_ADD_TEST(suite, TestCuSuiteInit);
