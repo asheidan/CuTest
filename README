@@ -8,24 +8,13 @@ Your unit tests are an investment. They let you to change your
 code and add new features confidently without worrying about
 accidentally breaking earlier features.
 
-You can also ship the unit tests to your users as part of the
-build. This way the users can confirm that your application
-installed correctly. Also they can submit the unit test output
-with bug reports which can help you narrow down and fix problems
-quickly, shortening your defect fixing cycle. 
-
-The tests will increase user confidence in your code and can
-reduce the time you spend in isolating defects reported by your
-users.
-
 
 LICENSING
 
 CuTest is distributed under a dual license (like MySql). It is
 available under the GNU GPL as well as a commercial license. If
-you do not want to be bound by the GPL terms (like the
-requirement that your own application be open source as well),
-you may purchase a commercial license.
+you are interested in purchasing a commercial license contact
+asimjalis@peakprogramming.com for details.
 
 GETTING STARTED
 
@@ -202,5 +191,4 @@ Please feel free to send me changes you make so that I can
 incorporate them into future releases.
 
 If you see any errors in this document please contact me at
-asimjalis@peakprogramming.com. I appreciate your interest and
-hope you find value in the CuTest community.
+asimjalis@peakprogramming.com.
