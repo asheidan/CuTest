@@ -55,7 +55,13 @@ void CuStringResize(CuString* str, int newSize)
 
 void CuStringAppend(CuString* str, const char* text)
 {
-	int length = strlen(text);
+	int length;
+
+	if (text == NULL) {
+		text = "NULL";
+	}
+
+	length = strlen(text);
 	if (str->length + length + 1 >= str->size)
 		CuStringResize(str, str->length + length + 1 + STRING_INC);
 	str->length += length;
@@ -161,7 +167,13 @@ void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, const cha
 	const char* expected, const char* actual)
 {
 	CuString string;
-	if (strcmp(expected, actual) == 0) return;
+	if ((expected == NULL && actual == NULL) ||
+	    (expected != NULL && actual != NULL &&
+	     strcmp(expected, actual) == 0))
+	{
+		return;
+	}
+
 	CuStringInit(&string);
 	if (message != NULL) 
 	{

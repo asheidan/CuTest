@@ -14,23 +14,28 @@
 
 static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char* message, const char* expected, const char* actual)
 {
-  const char *front = __FILE__ ":";
-  const size_t frontLen = strlen(front);
-  const size_t expectedLen = strlen(expected);
+	int mismatch;
+	if (expected == NULL || actual == NULL) {
+		mismatch = (expected != NULL || actual != NULL);
+	} else {
+		const char *front = __FILE__ ":";
+		const size_t frontLen = strlen(front);
+		const size_t expectedLen = strlen(expected);
 
-  const char *matchStr = actual;
+		const char *matchStr = actual;
 
-  int mismatch = (strncmp(matchStr, front, frontLen) != 0);
-  if (!mismatch) {
-    matchStr = strchr(matchStr + frontLen, ':');
-    mismatch |= (matchStr == NULL || strncmp(matchStr, ": ", 2));
-    if (!mismatch) {
-      matchStr += 2;
-      mismatch |= (strncmp(matchStr, expected, expectedLen) != 0);
-    }
-  }
+		mismatch = (strncmp(matchStr, front, frontLen) != 0);
+		if (!mismatch) {
+			matchStr = strchr(matchStr + frontLen, ':');
+			mismatch |= (matchStr == NULL || strncmp(matchStr, ": ", 2));
+			if (!mismatch) {
+				matchStr += 2;
+				mismatch |= (strncmp(matchStr, expected, expectedLen) != 0);
+			}
+		}
+	}
 
-  CuAssert_Line(tc, file, line, message, !mismatch);
+	CuAssert_Line(tc, file, line, message, !mismatch);
 }
 
 /*-------------------------------------------------------------------------*
@@ -55,6 +60,15 @@ void TestCuStringAppend(CuTest* tc)
 	CuStringAppend(str, " world");
 	CuAssertIntEquals(tc, 11, str->length);
 	CuAssertStrEquals(tc, "hello world", str->buffer);
+}
+
+
+void TestCuStringAppendNULL(CuTest* tc)
+{
+	CuString* str = CuStringNew();
+	CuStringAppend(str, NULL);
+	CuAssertIntEquals(tc, 4, str->length);
+	CuAssertStrEquals(tc, "NULL", str->buffer);
 }
 
 
@@ -106,6 +120,7 @@ CuSuite* CuStringGetSuite(void)
 
 	SUITE_ADD_TEST(suite, TestCuStringNew);
 	SUITE_ADD_TEST(suite, TestCuStringAppend);
+	SUITE_ADD_TEST(suite, TestCuStringAppendNULL);
 	SUITE_ADD_TEST(suite, TestCuStringAppendChar);
 	SUITE_ADD_TEST(suite, TestCuStringInserts);
 	SUITE_ADD_TEST(suite, TestCuStringResizes);
@@ -528,6 +543,72 @@ void TestAssertStrEquals(CuTest* tc)
 	CompareAsserts(tc, "CuAssertStrEquals failed", expectedMsg, tc2->message);
 }
 
+void TestAssertStrEquals_NULL(CuTest* tc)
+{
+	jmp_buf buf;
+	CuTest *tc2 = CuTestNew("TestAssertStrEquals_NULL", zTestFails);
+
+	tc2->jumpBuf = &buf;
+	if (setjmp(buf) == 0)
+	{
+		CuAssertStrEquals(tc2, NULL, NULL);
+	}
+	CuAssertTrue(tc, !tc2->failed);
+	CompareAsserts(tc, "CuAssertStrEquals_NULL failed", NULL, tc2->message);
+	if (setjmp(buf) == 0)
+	{
+		CuAssertStrEquals_Msg(tc2, "some text", NULL, NULL);
+	}
+	CuAssertTrue(tc, !tc2->failed);
+	CompareAsserts(tc, "CuAssertStrEquals_NULL failed", NULL, tc2->message);
+}
+
+void TestAssertStrEquals_FailNULLStr(CuTest* tc)
+{
+	jmp_buf buf;
+	CuTest *tc2 = CuTestNew("TestAssertStrEquals_FailNULLStr", zTestFails);
+
+	const char* expected = "expected <hello> but was <NULL>";
+	const char *expectedMsg = "some text: expected <hello> but was <NULL>";
+
+	tc2->jumpBuf = &buf;
+	if (setjmp(buf) == 0)
+	{
+		CuAssertStrEquals(tc2, "hello", NULL);
+	}
+	CuAssertTrue(tc, tc2->failed);
+	CompareAsserts(tc, "CuAssertStrEquals_FailNULLStr failed", expected, tc2->message);
+	if (setjmp(buf) == 0)
+	{
+		CuAssertStrEquals_Msg(tc2, "some text", "hello", NULL);
+	}
+	CuAssertTrue(tc, tc2->failed);
+	CompareAsserts(tc, "CuAssertStrEquals_FailNULLStr failed", expectedMsg, tc2->message);
+}
+
+void TestAssertStrEquals_FailStrNULL(CuTest* tc)
+{
+	jmp_buf buf;
+	CuTest *tc2 = CuTestNew("TestAssertStrEquals_FailStrNULL", zTestFails);
+
+	const char* expected = "expected <NULL> but was <hello>";
+	const char *expectedMsg = "some text: expected <NULL> but was <hello>";
+
+	tc2->jumpBuf = &buf;
+	if (setjmp(buf) == 0)
+	{
+		CuAssertStrEquals(tc2, NULL, "hello");
+	}
+	CuAssertTrue(tc, tc2->failed);
+	CompareAsserts(tc, "CuAssertStrEquals_FailStrNULL failed", expected, tc2->message);
+	if (setjmp(buf) == 0)
+	{
+		CuAssertStrEquals_Msg(tc2, "some text", NULL, "hello");
+	}
+	CuAssertTrue(tc, tc2->failed);
+	CompareAsserts(tc, "CuAssertStrEquals_FailStrNULL failed", expectedMsg, tc2->message);
+}
+
 void TestAssertIntEquals(CuTest* tc)
 {
 	jmp_buf buf;
@@ -598,6 +679,9 @@ CuSuite* CuGetSuite(void)
 	SUITE_ADD_TEST(suite, TestCuStrCopy);
 	SUITE_ADD_TEST(suite, TestFail);
 	SUITE_ADD_TEST(suite, TestAssertStrEquals);
+	SUITE_ADD_TEST(suite, TestAssertStrEquals_NULL);
+	SUITE_ADD_TEST(suite, TestAssertStrEquals_FailStrNULL);
+	SUITE_ADD_TEST(suite, TestAssertStrEquals_FailNULLStr);
 	SUITE_ADD_TEST(suite, TestAssertIntEquals);
 	SUITE_ADD_TEST(suite, TestAssertDblEquals);
 
