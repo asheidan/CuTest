@@ -11,8 +11,9 @@ char* CuStrCopy(char* old);
 
 #define CU_ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
 
-#define STRING_MAX	256
-#define STRING_INC	256
+#define HUGE_STRING_LEN	8192
+#define STRING_MAX		256
+#define STRING_INC		256
 
 typedef struct
 {

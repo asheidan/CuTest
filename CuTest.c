@@ -31,7 +31,7 @@ char* CuStrCopy(char* old)
 void CuStringInit(CuString* str)
 {
 	str->length = 0;
-	str->size = 256;
+	str->size = STRING_MAX;
 	str->buffer = (char*) malloc(sizeof(char) * str->size);
 	str->buffer[0] = '\0';
 }
@@ -40,7 +40,7 @@ CuString* CuStringNew(void)
 {
 	CuString* str = (CuString*) malloc(sizeof(CuString));
 	str->length = 0;
-	str->size = 256;
+	str->size = STRING_MAX;
 	str->buffer = (char*) malloc(sizeof(char) * str->size);
 	str->buffer[0] = '\0';
 	return str;
@@ -72,9 +72,9 @@ void CuStringAppendChar(CuString* str, char ch)
 void CuStringAppendFormat(CuString* str, char* format, ...)
 {
 	va_list argp;
-	char buf[256];
+	char buf[HUGE_STRING_LEN];
 	va_start(argp, format);
-	_vsnprintf(buf, 255, format, argp);
+	vsprintf(buf, format, argp);
 	va_end(argp);
 	CuStringAppend(str, buf);
 }
@@ -134,7 +134,7 @@ void CuAssertStrEquals(CuTest* tc, char* expected, char* actual)
 
 void CuAssertIntEquals(CuTest* tc, int expected, int actual)
 {
-	char buf[256];
+	char buf[STRING_MAX];
 	if (expected == actual) return;
 	sprintf(buf, "expected <%d> but was <%d>", expected, actual);
 	CuFail(tc, buf);
@@ -142,7 +142,7 @@ void CuAssertIntEquals(CuTest* tc, int expected, int actual)
 
 void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual)
 {
-	char buf[256];
+	char buf[STRING_MAX];
 	if (expected == actual) return;
 	sprintf(buf, "expected pointer <0x%X> but was <0x%X>", expected, actual);
 	CuFail(tc, buf);
@@ -150,7 +150,7 @@ void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual)
 
 void CuAssertPtrNotNull(CuTest* tc, void* pointer)
 {
-	char buf[256];
+	char buf[STRING_MAX];
 	if (pointer != NULL ) return;
 	sprintf(buf, "null pointer unexpected", pointer);
 	CuFail(tc, buf);

@@ -374,9 +374,9 @@ void TestCuStringAppendFormat(CuTest* tc)
 	text[300] = '\0';
 	CuStringAppendFormat(str, "%s", text);
 
-	/* check that bytes after buffer overflow ignored */
+	/* buffer limit raised to HUGE_STRING_LEN so no overflow */
 
-	CuAssert(tc, "length of str->buffer is 255", 255 == strlen(str->buffer));
+	CuAssert(tc, "length of str->buffer is 300", 300 == strlen(str->buffer));
 }
 
 void TestFail(CuTest* tc)

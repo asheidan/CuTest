@@ -17,7 +17,7 @@ void RunAllTests(void)
 	printf("%s\n", output->buffer);
 }
 
-void main(void)
+int main(void)
 {
 	RunAllTests();
 }
