@@ -75,7 +75,7 @@ void TestPasses(CuTest* tc)
 	CuAssert(tc, "test should pass", 1 == 0 + 1);
 }
 
-void TestFails(CuTest* tc)
+void zTestFails(CuTest* tc)
 {
 	CuAssert(tc, "test should fail", 1 == 1 + 1);
 }
@@ -186,7 +186,7 @@ void TestCuAssertPtrNotNull_Failure(CuTest* tc)
 void TestCuTestRun(CuTest* tc)
 {
 	CuTest tc2;
-	CuTestInit(&tc2, "MyTest", TestFails);
+	CuTestInit(&tc2, "MyTest", zTestFails);
 	CuTestRun(&tc2);
 	
 	CuAssertStrEquals(tc, "MyTest", tc2.name);
@@ -220,7 +220,7 @@ void TestCuSuiteAddTest(CuTest* tc)
 	CuTest tc2;
 
 	CuSuiteInit(&ts);
-	CuTestInit(&tc2, "MyTest", TestFails);
+	CuTestInit(&tc2, "MyTest", zTestFails);
 
 	CuSuiteAdd(&ts, &tc2);
 	CuAssertTrue(tc, ts.count == 1);
@@ -233,11 +233,11 @@ void TestCuSuiteAddSuite(CuTest* tc)
 	CuSuite* ts1 = CuSuiteNew();
 	CuSuite* ts2 = CuSuiteNew();
 
-	CuSuiteAdd(ts1, CuTestNew("TestFails1", TestFails));
-	CuSuiteAdd(ts1, CuTestNew("TestFails2", TestFails));
+	CuSuiteAdd(ts1, CuTestNew("TestFails1", zTestFails));
+	CuSuiteAdd(ts1, CuTestNew("TestFails2", zTestFails));
 
-	CuSuiteAdd(ts2, CuTestNew("TestFails3", TestFails));
-	CuSuiteAdd(ts2, CuTestNew("TestFails4", TestFails));
+	CuSuiteAdd(ts2, CuTestNew("TestFails3", zTestFails));
+	CuSuiteAdd(ts2, CuTestNew("TestFails4", zTestFails));
 
 	CuSuiteAddSuite(ts1, ts2);
 	CuAssertIntEquals(tc, 4, ts1->count);
@@ -256,8 +256,8 @@ void TestCuSuiteRun(CuTest* tc)
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
 	CuTestInit(&tc2, "TestPasses", TestPasses);
-	CuTestInit(&tc3, "TestFails",  TestFails);
-	CuTestInit(&tc4, "TestFails",  TestFails);
+	CuTestInit(&tc3, "TestFails",  zTestFails);
+	CuTestInit(&tc4, "TestFails",  zTestFails);
 
 	CuSuiteAdd(&ts, &tc1);
 	CuSuiteAdd(&ts, &tc2);
@@ -278,7 +278,7 @@ void TestCuSuiteSummary(CuTest* tc)
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
-	CuTestInit(&tc2, "TestFails",  TestFails);
+	CuTestInit(&tc2, "TestFails",  zTestFails);
 	CuStringInit(&summary);
 
 	CuSuiteAdd(&ts, &tc1);
@@ -302,7 +302,7 @@ void TestCuSuiteDetails_SingleFail(CuTest* tc)
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
-	CuTestInit(&tc2, "TestFails",  TestFails);
+	CuTestInit(&tc2, "TestFails",  zTestFails);
 	CuStringInit(&details);
 
 	CuSuiteAdd(&ts, &tc1);
@@ -384,8 +384,8 @@ void TestCuSuiteDetails_MultipleFails(CuTest* tc)
 	char* expected;
 
 	CuSuiteInit(&ts);
-	CuTestInit(&tc1, "TestFails1", TestFails);
-	CuTestInit(&tc2, "TestFails2", TestFails);
+	CuTestInit(&tc1, "TestFails1", zTestFails);
+	CuTestInit(&tc2, "TestFails2", zTestFails);
 	CuStringInit(&details);
 
 	CuSuiteAdd(&ts, &tc1);
@@ -439,7 +439,7 @@ void TestFail(CuTest* tc)
 {
 	jmp_buf buf;
 	int pointReached = 0;
-	CuTest* tc2 = CuTestNew("TestFails", TestFails);
+	CuTest* tc2 = CuTestNew("TestFails", zTestFails);
 	tc2->jumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
@@ -452,7 +452,7 @@ void TestFail(CuTest* tc)
 void TestAssertStrEquals(CuTest* tc)
 {
 	jmp_buf buf;
-	CuTest* tc2 = CuTestNew("TestFails", TestFails);
+	CuTest* tc2 = CuTestNew("TestFails", zTestFails);
 	char* expected = "expected <hello> but was <world>";
 	tc2->jumpBuf = &buf;
 	if (setjmp(buf) == 0)
@@ -465,7 +465,7 @@ void TestAssertStrEquals(CuTest* tc)
 void TestAssertIntEquals(CuTest* tc)
 {
 	jmp_buf buf;
-	CuTest* tc2 = CuTestNew("TestFails", TestFails);
+	CuTest* tc2 = CuTestNew("TestFails", zTestFails);
 	char* expected = "expected <42> but was <32>";
 	tc2->jumpBuf = &buf;
 	if (setjmp(buf) == 0)
