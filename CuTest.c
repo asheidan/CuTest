@@ -9,16 +9,16 @@
 // Str
 //---------------------------------------------------------------------------
 
-char* StrAlloc(int size)
+char* CuStrAlloc(int size)
 {
 	char* new = (char*) malloc( sizeof(char) * (size) );
 	return new;
 }
 
-char* StrCopy(char* old)
+char* CuStrCopy(char* old)
 {
 	int len = strlen(old);
-	char* new = StrAlloc(len + 1);
+	char* new = CuStrAlloc(len + 1);
 	strcpy(new, old);
 	return new;
 }
@@ -84,7 +84,7 @@ void CuStringAppendFormat(CuString* str, char* format, ...)
 
 void CuTestInit(CuTest* t, char* name, TestFunction function)
 {
-	t->name = StrCopy(name);
+	t->name = CuStrCopy(name);
 	t->failed = 0;
 	t->ran = 0;
 	t->message = NULL;
@@ -102,7 +102,7 @@ CuTest* CuTestNew(char* name, TestFunction function)
 void CuFail(CuTest* tc, char* message)
 {
 	tc->failed = 1;
-	tc->message = StrCopy(message);
+	tc->message = CuStrCopy(message);
 	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
 }
 

@@ -8,8 +8,8 @@
 
 #define ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
 
-char* StrAlloc(int size);
-char* StrCopy(char* old);
+char* CuStrAlloc(int size);
+char* CuStrCopy(char* old);
 
 #define STRING_MAX	256
 #define STRING_INC	256

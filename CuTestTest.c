@@ -355,10 +355,10 @@ void TestCuSuiteDetails_MultipleFails(CuTest* tc)
 // Misc Test
 //---------------------------------------------------------------------------
 
-void TestStrCopy(CuTest* tc)
+void TestCuStrCopy(CuTest* tc)
 {
 	char* old = "hello world";
-	char* new = StrCopy(old);
+	char* new = CuStrCopy(old);
 	CuAssert(tc, "old is new", strcmp(old, new) == 0);
 }
 
@@ -366,7 +366,7 @@ void TestStrCopy(CuTest* tc)
 void TestCuStringAppendFormat(CuTest* tc)
 {
 	int i;
-	char* text = StrAlloc(301);		// long string
+	char* text = CuStrAlloc(301);		// long string
 	CuString* str = CuStringNew();
 	for (i = 0 ; i < 300 ; ++i)
 		text[i] = 'a';
@@ -427,7 +427,7 @@ CuSuite* CuGetSuite(void)
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, TestCuStringAppendFormat);
-	SUITE_ADD_TEST(suite, TestStrCopy);
+	SUITE_ADD_TEST(suite, TestCuStrCopy);
 	SUITE_ADD_TEST(suite, TestFail);
 	SUITE_ADD_TEST(suite, TestAssertStrEquals);
 	SUITE_ADD_TEST(suite, TestAssertIntEquals);
