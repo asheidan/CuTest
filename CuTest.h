@@ -6,10 +6,10 @@
 
 // CuString
 
-#define ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
-
 char* CuStrAlloc(int size);
 char* CuStrCopy(char* old);
+
+#define CU_ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
 
 #define STRING_MAX	256
 #define STRING_INC	256
@@ -50,6 +50,8 @@ void CuAssert(CuTest* tc, char* message, int condition);
 void CuAssertTrue(CuTest* tc, int condition);
 void CuAssertStrEquals(CuTest* tc, char* expected, char* actual);
 void CuAssertIntEquals(CuTest* tc, int expected, int actual);
+void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual);
+void CuAssertPtrNotNull(CuTest* tc, void* pointer);
 void CuTestRun(CuTest* tc);
 
 // CuSuite

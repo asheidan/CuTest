@@ -2,6 +2,7 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "CuTest.h"
 
@@ -94,7 +95,7 @@ void CuTestInit(CuTest* t, char* name, TestFunction function)
 
 CuTest* CuTestNew(char* name, TestFunction function)
 {
-	CuTest* tc = ALLOC(CuTest);
+	CuTest* tc = CU_ALLOC(CuTest);
 	CuTestInit(tc, name, function);
 	return tc;
 }
@@ -139,6 +140,22 @@ void CuAssertIntEquals(CuTest* tc, int expected, int actual)
 	CuFail(tc, buf);
 }
 
+void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual)
+{
+	char buf[256];
+	if (expected == actual) return;
+	sprintf(buf, "expected pointer <0x%X> but was <0x%X>", expected, actual);
+	CuFail(tc, buf);
+}
+
+void CuAssertPtrNotNull(CuTest* tc, void* pointer)
+{
+	char buf[256];
+	if (pointer != NULL ) return;
+	sprintf(buf, "null pointer unexpected", pointer);
+	CuFail(tc, buf);
+}
+
 void CuTestRun(CuTest* tc)
 {
 	jmp_buf buf;
@@ -163,7 +180,7 @@ void CuSuiteInit(CuSuite* testSuite)
 
 CuSuite* CuSuiteNew()
 {
-	CuSuite* testSuite = ALLOC(CuSuite);
+	CuSuite* testSuite = CU_ALLOC(CuSuite);
 	CuSuiteInit(testSuite);
 	return testSuite;
 }
