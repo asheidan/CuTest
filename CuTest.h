@@ -32,9 +32,11 @@ void CuStringResize(CuString* str, int newSize);
 
 /* CuTest */
 
-typedef void (*TestFunction)(void*);
+typedef struct CuTest CuTest;
 
-typedef struct
+typedef void (*TestFunction)(CuTest *);
+
+struct CuTest
 {
 	char* name;
 	TestFunction function;
@@ -42,7 +44,7 @@ typedef struct
 	int ran;
 	char* message;
 	jmp_buf *jumpBuf;
-} CuTest;
+};
 
 void CuTestInit(CuTest* t, char* name, TestFunction function);
 CuTest* CuTestNew(char* name, TestFunction function);
@@ -59,8 +61,7 @@ void CuTestRun(CuTest* tc);
 
 #define MAX_TEST_CASES	1024	
 
-#define SUITE_ADD_TEST(SUITE,TEST)	\
-	CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST))
+#define SUITE_ADD_TEST(SUITE,TEST)	CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST))
 
 typedef struct
 {
