@@ -5,9 +5,9 @@
 
 #include "CuTest.h"
 
-//-----------------------------------------------------------------
-// CuString Test
-//-----------------------------------------------------------------
+/*-------------------------------------------------------------------------*
+ * CuString Test
+ *-------------------------------------------------------------------------*/
 
 void TestCuStringNew(CuTest* tc)
 {
@@ -66,9 +66,9 @@ CuSuite* CuStringGetSuite(void)
 	return suite;
 }
 
-//---------------------------------------------------------------------------
-// CuTest Test
-//---------------------------------------------------------------------------
+/*-------------------------------------------------------------------------*
+ * CuTest Test
+ *-------------------------------------------------------------------------*/
 
 void TestPasses(CuTest* tc)
 {
@@ -139,9 +139,9 @@ void TestCuTestRun(CuTest* tc)
 	CuAssertStrEquals(tc, "test should fail", tc2.message);
 }
 
-//---------------------------------------------------------------------------
-// CuSuite Test
-//---------------------------------------------------------------------------
+/*-------------------------------------------------------------------------*
+ * CuSuite Test
+ *-------------------------------------------------------------------------*/
 
 void TestCuSuiteInit(CuTest* tc)
 {
@@ -352,9 +352,9 @@ void TestCuSuiteDetails_MultipleFails(CuTest* tc)
 }
 
 
-//---------------------------------------------------------------------------
-// Misc Test
-//---------------------------------------------------------------------------
+/*-------------------------------------------------------------------------*
+ * Misc Test
+ *-------------------------------------------------------------------------*/
 
 void TestCuStrCopy(CuTest* tc)
 {
@@ -367,14 +367,14 @@ void TestCuStrCopy(CuTest* tc)
 void TestCuStringAppendFormat(CuTest* tc)
 {
 	int i;
-	char* text = CuStrAlloc(301);		// long string
+	char* text = CuStrAlloc(301);		/* long string */
 	CuString* str = CuStringNew();
 	for (i = 0 ; i < 300 ; ++i)
 		text[i] = 'a';
 	text[300] = '\0';
 	CuStringAppendFormat(str, "%s", text);
 
-	// check that bytes after buffer overflow ignored
+	/* check that bytes after buffer overflow ignored */
 
 	CuAssert(tc, "length of str->buffer is 255", 255 == strlen(str->buffer));
 }
@@ -419,9 +419,9 @@ void TestAssertIntEquals(CuTest* tc)
 	CuAssert(tc, "CuAssertStrEquals works", strcmp(expected, tc2->message) == 0);
 }
 
-//---------------------------------------------------------------------------
-// main
-//---------------------------------------------------------------------------
+/*-------------------------------------------------------------------------*
+ * main
+ *-------------------------------------------------------------------------*/
 
 CuSuite* CuGetSuite(void)
 {
@@ -451,5 +451,3 @@ CuSuite* CuGetSuite(void)
 
 	return suite;
 }
-
-

@@ -4,7 +4,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 
-// CuString
+/* CuString */
 
 char* CuStrAlloc(int size);
 char* CuStrCopy(char* old);
@@ -29,7 +29,7 @@ void CuStringAppendChar(CuString* str, char ch);
 void CuStringAppendFormat(CuString* str, char* format, ...);
 void CuStringResize(CuString* str, int newSize);
 
-// CuTest
+/* CuTest */
 
 typedef void (*TestFunction)(void*);
 
@@ -54,7 +54,7 @@ void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual);
 void CuAssertPtrNotNull(CuTest* tc, void* pointer);
 void CuTestRun(CuTest* tc);
 
-// CuSuite
+/* CuSuite */
 
 #define MAX_TEST_CASES	1024	
 
