@@ -6,6 +6,8 @@
 # Author: Asim Jalis
 # Date: 01/08/2003
 
+if test $# -eq 0 ; then FILES=*.c ; else FILES=$* ; fi
+
 echo '
 
 /* This is auto-generated code. Edit at your own peril. */
@@ -14,7 +16,7 @@ echo '
 
 '
 
-cat *.c | grep '^void Test' | 
+cat $FILES | grep '^void Test' | 
     sed -e 's/(.*$//' \
         -e 's/$/(CuTest*);/' \
         -e 's/^/extern /'
@@ -28,7 +30,7 @@ void RunAllTests(void)
     CuSuite* suite = CuSuiteNew();
 
 '
-cat *.c | grep '^void Test' | 
+cat $FILES | grep '^void Test' | 
     sed -e 's/^void //' \
         -e 's/(.*$//' \
         -e 's/^/    SUITE_ADD_TEST(suite, /' \
