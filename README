@@ -198,3 +198,12 @@ make-tests.sh will grep through all the .c files in the current
 directory and generate the code to run all the tests contained in
 them. Using this script you don't have to worry about writing
 AllTests.c or dealing with any of the other suite code.
+
+
+CREDITS
+
+[02.23.2003] Dave Glowacki <dglo@hyde.ssec.wisc.edu> has added
+(1) file name and line numbers to the error messages, (2)
+AssertDblEquals for doubles, (3) Assert<X>Equals_Msg version of
+all the Assert<X>Equals to pass in optional message which is
+printed out on assert failure.

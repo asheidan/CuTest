@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "CuTest.h"
 
@@ -12,16 +13,16 @@
 
 char* CuStrAlloc(int size)
 {
-	char* new = (char*) malloc( sizeof(char) * (size) );
-	return new;
+	char* newStr = (char*) malloc( sizeof(char) * (size) );
+	return newStr;
 }
 
-char* CuStrCopy(char* old)
+char* CuStrCopy(const char* old)
 {
 	int len = strlen(old);
-	char* new = CuStrAlloc(len + 1);
-	strcpy(new, old);
-	return new;
+	char* newStr = CuStrAlloc(len + 1);
+	strcpy(newStr, old);
+	return newStr;
 }
 
 /*-------------------------------------------------------------------------*
@@ -52,7 +53,7 @@ void CuStringResize(CuString* str, int newSize)
 	str->size = newSize;
 }
 
-void CuStringAppend(CuString* str, char* text)
+void CuStringAppend(CuString* str, const char* text)
 {
 	int length = strlen(text);
 	if (str->length + length + 1 >= str->size)
@@ -69,7 +70,7 @@ void CuStringAppendChar(CuString* str, char ch)
 	CuStringAppend(str, text);
 }
 
-void CuStringAppendFormat(CuString* str, char* format, ...)
+void CuStringAppendFormat(CuString* str, const char* format, ...)
 {
 	va_list argp;
 	char buf[HUGE_STRING_LEN];
@@ -79,11 +80,23 @@ void CuStringAppendFormat(CuString* str, char* format, ...)
 	CuStringAppend(str, buf);
 }
 
+void CuStringInsert(CuString* str, const char* text, int pos)
+{
+	int length = strlen(text);
+	if (pos > str->length)
+		pos = str->length;
+	if (str->length + length + 1 >= str->size)
+		CuStringResize(str, str->length + length + 1 + STRING_INC);
+	memmove(str->buffer + pos + length, str->buffer + pos, (str->length - pos) + 1);
+	str->length += length;
+	memcpy(str->buffer + pos, text, length);
+}
+
 /*-------------------------------------------------------------------------*
  * CuTest
  *-------------------------------------------------------------------------*/
 
-void CuTestInit(CuTest* t, char* name, TestFunction function)
+void CuTestInit(CuTest* t, const char* name, TestFunction function)
 {
 	t->name = CuStrCopy(name);
 	t->failed = 0;
@@ -93,67 +106,11 @@ void CuTestInit(CuTest* t, char* name, TestFunction function)
 	t->jumpBuf = NULL;
 }
 
-CuTest* CuTestNew(char* name, TestFunction function)
+CuTest* CuTestNew(const char* name, TestFunction function)
 {
 	CuTest* tc = CU_ALLOC(CuTest);
 	CuTestInit(tc, name, function);
 	return tc;
-}
-
-void CuFail(CuTest* tc, char* message)
-{
-	tc->failed = 1;
-	tc->message = CuStrCopy(message);
-	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
-}
-
-void CuAssert(CuTest* tc, char* message, int condition)
-{
-	if (condition) return;
-	CuFail(tc, message);
-}
-
-void CuAssertTrue(CuTest* tc, int condition)
-{
-	if (condition) return;
-	CuFail(tc, "assert failed");
-}
-
-void CuAssertStrEquals(CuTest* tc, char* expected, char* actual)
-{
-	CuString* message;
-	if (strcmp(expected, actual) == 0) return;
-	message = CuStringNew();
-	CuStringAppend(message, "expected <");
-	CuStringAppend(message, expected);
-	CuStringAppend(message, "> but was <");
-	CuStringAppend(message, actual);
-	CuStringAppend(message, ">");
-	CuFail(tc, message->buffer);
-}
-
-void CuAssertIntEquals(CuTest* tc, int expected, int actual)
-{
-	char buf[STRING_MAX];
-	if (expected == actual) return;
-	sprintf(buf, "expected <%d> but was <%d>", expected, actual);
-	CuFail(tc, buf);
-}
-
-void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual)
-{
-	char buf[STRING_MAX];
-	if (expected == actual) return;
-	sprintf(buf, "expected pointer <0x%p> but was <0x%p>", expected, actual);
-	CuFail(tc, buf);
-}
-
-void CuAssertPtrNotNull(CuTest* tc, void* pointer)
-{
-	char buf[STRING_MAX];
-	if (pointer != NULL ) return;
-	sprintf(buf, "null pointer unexpected");
-	CuFail(tc, buf);
 }
 
 void CuTestRun(CuTest* tc)
@@ -168,6 +125,85 @@ void CuTestRun(CuTest* tc)
 	tc->jumpBuf = 0;
 }
 
+static void CuFailInternal(CuTest* tc, const char* file, int line, CuString* string)
+{
+	char buf[HUGE_STRING_LEN];
+
+	sprintf(buf, "%s:%d: ", file, line);
+	CuStringInsert(string, buf, 0);
+
+	tc->failed = 1;
+	tc->message = string->buffer;
+	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
+}
+
+void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, const char* message)
+{
+	CuString string;
+
+	CuStringInit(&string);
+	if (message2 != NULL) 
+	{
+		CuStringAppend(&string, message2);
+		CuStringAppend(&string, ": ");
+	}
+	CuStringAppend(&string, message);
+	CuFailInternal(tc, file, line, &string);
+}
+
+void CuAssert_Line(CuTest* tc, const char* file, int line, const char* message, int condition)
+{
+	if (condition) return;
+	CuFail_Line(tc, file, line, NULL, message);
+}
+
+void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+	const char* expected, const char* actual)
+{
+	CuString string;
+	if (strcmp(expected, actual) == 0) return;
+	CuStringInit(&string);
+	if (message != NULL) 
+	{
+		CuStringAppend(&string, message);
+		CuStringAppend(&string, ": ");
+	}
+	CuStringAppend(&string, "expected <");
+	CuStringAppend(&string, expected);
+	CuStringAppend(&string, "> but was <");
+	CuStringAppend(&string, actual);
+	CuStringAppend(&string, ">");
+	CuFailInternal(tc, file, line, &string);
+}
+
+void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+	int expected, int actual)
+{
+	char buf[STRING_MAX];
+	if (expected == actual) return;
+	sprintf(buf, "expected <%d> but was <%d>", expected, actual);
+	CuFail_Line(tc, file, line, message, buf);
+}
+
+void CuAssertDblEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+	double expected, double actual, double delta)
+{
+	char buf[STRING_MAX];
+	if (fabs(expected - actual) <= delta) return;
+	sprintf(buf, "expected <%lf> but was <%lf>", expected, actual);
+	CuFail_Line(tc, file, line, message, buf);
+}
+
+void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+	void* expected, void* actual)
+{
+	char buf[STRING_MAX];
+	if (expected == actual) return;
+	sprintf(buf, "expected pointer <0x%p> but was <0x%p>", expected, actual);
+	CuFail_Line(tc, file, line, message, buf);
+}
+
+
 /*-------------------------------------------------------------------------*
  * CuSuite
  *-------------------------------------------------------------------------*/
@@ -178,7 +214,7 @@ void CuSuiteInit(CuSuite* testSuite)
 	testSuite->failCount = 0;
 }
 
-CuSuite* CuSuiteNew()
+CuSuite* CuSuiteNew(void)
 {
 	CuSuite* testSuite = CU_ALLOC(CuSuite);
 	CuSuiteInit(testSuite);
@@ -232,7 +268,7 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 	if (testSuite->failCount == 0)
 	{
 		int passCount = testSuite->count - testSuite->failCount;
-		char* testWord = passCount == 1 ? "test" : "tests";
+		const char* testWord = passCount == 1 ? "test" : "tests";
 		CuStringAppendFormat(details, "OK (%d %s)\n", passCount, testWord);
 	}
 	else
@@ -248,7 +284,7 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 			if (testCase->failed)
 			{
 				failCount++;
-				CuStringAppendFormat(details, "%d) %s: %s\n", 
+				CuStringAppendFormat(details, "%d) %s: %s\n",
 					failCount, testCase->name, testCase->message);
 			}
 		}

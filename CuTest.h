@@ -7,7 +7,7 @@
 /* CuString */
 
 char* CuStrAlloc(int size);
-char* CuStrCopy(char* old);
+char* CuStrCopy(const char* old);
 
 #define CU_ALLOC(TYPE)		((TYPE*) malloc(sizeof(TYPE)))
 
@@ -24,10 +24,11 @@ typedef struct
 
 void CuStringInit(CuString* str);
 CuString* CuStringNew(void);
-void CuStringRead(CuString* str, char* path);
-void CuStringAppend(CuString* str, char* text);
+void CuStringRead(CuString* str, const char* path);
+void CuStringAppend(CuString* str, const char* text);
 void CuStringAppendChar(CuString* str, char ch);
-void CuStringAppendFormat(CuString* str, char* format, ...);
+void CuStringAppendFormat(CuString* str, const char* format, ...);
+void CuStringInsert(CuString* str, const char* text, int pos);
 void CuStringResize(CuString* str, int newSize);
 
 /* CuTest */
@@ -38,42 +39,69 @@ typedef void (*TestFunction)(CuTest *);
 
 struct CuTest
 {
-	char* name;
+	const char* name;
 	TestFunction function;
 	int failed;
 	int ran;
-	char* message;
+	const char* message;
 	jmp_buf *jumpBuf;
 };
 
-void CuTestInit(CuTest* t, char* name, TestFunction function);
-CuTest* CuTestNew(char* name, TestFunction function);
-void CuFail(CuTest* tc, char* message);
-void CuAssert(CuTest* tc, char* message, int condition);
-void CuAssertTrue(CuTest* tc, int condition);
-void CuAssertStrEquals(CuTest* tc, char* expected, char* actual);
-void CuAssertIntEquals(CuTest* tc, int expected, int actual);
-void CuAssertPtrEquals(CuTest* tc, void* expected, void* actual);
-void CuAssertPtrNotNull(CuTest* tc, void* pointer);
+void CuTestInit(CuTest* t, const char* name, TestFunction function);
+CuTest* CuTestNew(const char* name, TestFunction function);
 void CuTestRun(CuTest* tc);
+
+/* Internal versions of assert functions -- use the public versions */
+void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, const char* message);
+void CuAssert_Line(CuTest* tc, const char* file, int line, const char* message, int condition);
+void CuAssertStrEquals_LineMsg(CuTest* tc, 
+	const char* file, int line, const char* message, 
+	const char* expected, const char* actual);
+void CuAssertIntEquals_LineMsg(CuTest* tc, 
+	const char* file, int line, const char* message, 
+	int expected, int actual);
+void CuAssertDblEquals_LineMsg(CuTest* tc, 
+	const char* file, int line, const char* message, 
+	double expected, double actual, double delta);
+void CuAssertPtrEquals_LineMsg(CuTest* tc, 
+	const char* file, int line, const char* message, 
+	void* expected, void* actual);
+
+/* public assert functions */
+
+#define CuFail(tc, ms)                        CuFail_Line(  (tc), __FILE__, __LINE__, NULL, (ms))
+#define CuAssert(tc, ms, cond)                CuAssert_Line((tc), __FILE__, __LINE__, (ms), (cond))
+#define CuAssertTrue(tc, cond)                CuAssert_Line((tc), __FILE__, __LINE__, "assert failed", (cond))
+
+#define CuAssertStrEquals(tc,ex,ac)           CuAssertStrEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
+#define CuAssertStrEquals_Msg(tc,ms,ex,ac)    CuAssertStrEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
+#define CuAssertIntEquals(tc,ex,ac)           CuAssertIntEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
+#define CuAssertIntEquals_Msg(tc,ms,ex,ac)    CuAssertIntEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
+#define CuAssertDblEquals(tc,ex,ac,dl)        CuAssertDblEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac),(dl))
+#define CuAssertDblEquals_Msg(tc,ms,ex,ac,dl) CuAssertDblEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac),(dl))
+#define CuAssertPtrEquals(tc,ex,ac)           CuAssertPtrEquals_LineMsg((tc),__FILE__,__LINE__,NULL,(ex),(ac))
+#define CuAssertPtrEquals_Msg(tc,ms,ex,ac)    CuAssertPtrEquals_LineMsg((tc),__FILE__,__LINE__,(ms),(ex),(ac))
+
+#define CuAssertPtrNotNull(tc,p)        CuAssert_Line((tc),__FILE__,__LINE__,"null pointer unexpected",(p != NULL))
+#define CuAssertPtrNotNullMsg(tc,msg,p) CuAssert_Line((tc),__FILE__,__LINE__,(msg),(p != NULL))
 
 /* CuSuite */
 
-#define MAX_TEST_CASES	1024	
+#define MAX_TEST_CASES	1024
 
 #define SUITE_ADD_TEST(SUITE,TEST)	CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST))
 
 typedef struct
 {
 	int count;
-	CuTest* list[MAX_TEST_CASES]; 
+	CuTest* list[MAX_TEST_CASES];
 	int failCount;
 
 } CuSuite;
 
 
 void CuSuiteInit(CuSuite* testSuite);
-CuSuite* CuSuiteNew();
+CuSuite* CuSuiteNew(void);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
