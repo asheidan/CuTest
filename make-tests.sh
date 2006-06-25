@@ -1,10 +1,12 @@
-#!/usr/local/bin/bash
+#!/bin/sh
 
 # Auto generate single AllTests file for CuTest.
 # Searches through all *.c files in the current directory.
 # Prints to stdout.
 # Author: Asim Jalis
 # Date: 01/08/2003
+
+# 31 May 2006: added exit code for main() -- Brandon Volbright
 
 if test $# -eq 0 ; then FILES=*.c ; else FILES=$* ; fi
 
@@ -24,7 +26,7 @@ cat $FILES | grep '^void Test' |
 echo \
 '
 
-void RunAllTests(void) 
+int RunAllTests(void) 
 {
     CuString *output = CuStringNew();
     CuSuite* suite = CuSuiteNew();
@@ -42,10 +44,12 @@ echo \
     CuSuiteSummary(suite, output);
     CuSuiteDetails(suite, output);
     printf("%s\n", output->buffer);
+
+    return suite->failCount == 0 ? 0 : 1;
 }
 
 int main(void)
 {
-    RunAllTests();
+    return RunAllTests();
 }
 '
