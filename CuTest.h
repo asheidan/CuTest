@@ -4,6 +4,8 @@
 #include <setjmp.h>
 #include <stdarg.h>
 
+#define CUTEST_VERSION  "CuTest 1.5"
+
 /* CuString */
 
 char* CuStrAlloc(int size);
