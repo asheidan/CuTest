@@ -50,6 +50,8 @@ struct CuTest
 	TestFunction function;
 	int failed;
 	int ran;
+	const char* file;
+	int line;
 	const char* message;
 	jmp_buf *jumpBuf;
 };

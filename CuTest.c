@@ -114,6 +114,8 @@ void CuTestInit(CuTest* t, const char* name, TestFunction function)
 	t->name = CuStrCopy(name);
 	t->failed = 0;
 	t->ran = 0;
+	t->file = NULL;
+	t->line = 0;
 	t->message = NULL;
 	t->function = function;
 	t->jumpBuf = NULL;
@@ -147,12 +149,9 @@ void CuTestRun(CuTest* tc)
 
 static void CuFailInternal(CuTest* tc, const char* file, int line, CuString* string)
 {
-	char buf[HUGE_STRING_LEN];
-
-	sprintf(buf, "%s:%d: ", file, line);
-	CuStringInsert(string, buf, 0);
-
 	tc->failed = 1;
+	tc->file = file;
+	tc->line = line;
 	tc->message = string->buffer;
 	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
 }
@@ -338,8 +337,17 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 			if (testCase->failed)
 			{
 				failCount++;
-				CuStringAppendFormat(details, "%d) %s: %s\n",
-					failCount, testCase->name, testCase->message);
+				if (NULL == testCase->file)
+				{
+					CuStringAppendFormat(details, "%d) %s: %s\n",
+						failCount, testCase->name, testCase->message);
+				}
+				else
+				{
+					CuStringAppendFormat(details, "%d) %s: %s:%d: %s\n",
+						failCount, testCase->name, testCase->file, testCase->line,
+						testCase->message);
+				}
 			}
 		}
 		CuStringAppend(details, "\n!!!FAILURES!!!\n");
