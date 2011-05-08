@@ -14,6 +14,8 @@
 
 static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char* message, const char* expected, const CuTest* actual)
 {
+	const char * formatEnv = getenv(FORMAT_ENVNAME);
+
 	int mismatch;
 	if (expected == NULL || (actual == NULL && actual->message && actual->file)) {
 		mismatch = (expected != NULL || (actual != NULL &&
@@ -26,7 +28,10 @@ static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char*
 		char buf[HUGE_STRING_LEN];
 		char * matchStr = &buf[0];
 		if (actual->file)
-			snprintf(buf, HUGE_STRING_LEN-1, "%s: %s:%d", actual->message, actual->file, actual->line);
+			if (formatEnv && 0==strcmp(formatEnv, FORMAT_ENVVAL_GCCLIKE))
+				snprintf(buf, HUGE_STRING_LEN-1, "%s:%d:%s", actual->file, actual->line, actual->message);
+			else
+				snprintf(buf, HUGE_STRING_LEN-1, "%s: %s:%d", actual->message, actual->file, actual->line);
 		else
 			snprintf(buf, HUGE_STRING_LEN-1, "%s", actual->message);
 			
@@ -383,13 +388,14 @@ void TestCuSuiteSummary(CuTest* tc)
 }
 
 
-void TestCuSuiteDetails_SingleFail(CuTest* tc)
+void TestCuSuiteDetails_SingleFail_default(CuTest* tc)
 {
 	CuSuite ts;
 	CuTest tc1, tc2;
 	CuString details;
 	const char* front;
 	const char* back;
+	unsetenv(FORMAT_ENVNAME);
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
@@ -407,6 +413,40 @@ void TestCuSuiteDetails_SingleFail(CuTest* tc)
 
 	front = "There was 1 failure:\n"
 		"1) TestFails: ";
+	back =  "test should fail\n"
+		"\n!!!FAILURES!!!\n"
+		"Runs: 2 Passes: 1 Fails: 1\n";
+
+	CuAssertStrEquals(tc, back, details.buffer + strlen(details.buffer) - strlen(back));
+	details.buffer[strlen(front)] = 0;
+	CuAssertStrEquals(tc, front, details.buffer);
+}
+
+void TestCuSuiteDetails_SingleFail_gcclike(CuTest* tc)
+{
+	CuSuite ts;
+	CuTest tc1, tc2;
+	CuString details;
+	const char* front;
+	const char* back;
+	setenv(FORMAT_ENVNAME, FORMAT_ENVVAL_GCCLIKE, 1);
+
+	CuSuiteInit(&ts);
+	CuTestInit(&tc1, "TestPasses", TestPasses);
+	CuTestInit(&tc2, "TestFails",  zTestFails);
+	CuStringInit(&details);
+
+	CuSuiteAdd(&ts, &tc1);
+	CuSuiteAdd(&ts, &tc2);
+	CuSuiteRun(&ts);
+
+	CuSuiteDetails(&ts, &details);
+
+	CuAssertTrue(tc, ts.count == 2);
+	CuAssertTrue(tc, ts.failCount == 1);
+
+	front = "There was 1 failure:\n"
+		__FILE__ ":";
 	back =  "test should fail\n"
 		"\n!!!FAILURES!!!\n"
 		"Runs: 2 Passes: 1 Fails: 1\n";
@@ -469,7 +509,7 @@ void TestCuSuiteDetails_MultiplePasses(CuTest* tc)
 	CuAssertStrEquals(tc, expected, details.buffer);
 }
 
-void TestCuSuiteDetails_MultipleFails(CuTest* tc)
+void TestCuSuiteDetails_MultipleFails_default(CuTest* tc)
 {
 	CuSuite ts;
 	CuTest tc1, tc2;
@@ -477,6 +517,7 @@ void TestCuSuiteDetails_MultipleFails(CuTest* tc)
 	const char* front;
 	const char* mid;
 	const char* back;
+	unsetenv(FORMAT_ENVNAME);
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestFails1", zTestFails);
@@ -497,6 +538,45 @@ void TestCuSuiteDetails_MultipleFails(CuTest* tc)
 		"1) TestFails1: ";
 	mid =   "test should fail\n"
 		"2) TestFails2: ";
+	back =  "test should fail\n"
+		"\n!!!FAILURES!!!\n"
+		"Runs: 2 Passes: 0 Fails: 2\n";
+
+	CuAssertStrEquals(tc, back, details.buffer + strlen(details.buffer) - strlen(back));
+	CuAssert(tc, "Couldn't find middle", strstr(details.buffer, mid) != NULL);
+	details.buffer[strlen(front)] = 0;
+	CuAssertStrEquals(tc, front, details.buffer);
+}
+
+void TestCuSuiteDetails_MultipleFails_gcclike(CuTest* tc)
+{
+	CuSuite ts;
+	CuTest tc1, tc2;
+	CuString details;
+	const char* front;
+	const char* mid;
+	const char* back;
+	setenv(FORMAT_ENVNAME, FORMAT_ENVVAL_GCCLIKE, 1);
+
+	CuSuiteInit(&ts);
+	CuTestInit(&tc1, "TestFails1", zTestFails);
+	CuTestInit(&tc2, "TestFails2", zTestFails);
+	CuStringInit(&details);
+
+	CuSuiteAdd(&ts, &tc1);
+	CuSuiteAdd(&ts, &tc2);
+	CuSuiteRun(&ts);
+
+	CuSuiteDetails(&ts, &details);
+
+	CuAssertTrue(tc, ts.count == 2);
+	CuAssertTrue(tc, ts.failCount == 2);
+
+	front =
+		"There were 2 failures:\n"
+		__FILE__ ":";
+	mid =   "test should fail\n"
+		__FILE__ ":";
 	back =  "test should fail\n"
 		"\n!!!FAILURES!!!\n"
 		"Runs: 2 Passes: 0 Fails: 2\n";
@@ -730,10 +810,12 @@ CuSuite* CuGetSuite(void)
 	SUITE_ADD_TEST(suite, TestCuSuiteMoveSuite);
 	SUITE_ADD_TEST(suite, TestCuSuiteRun);
 	SUITE_ADD_TEST(suite, TestCuSuiteSummary);
-	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail_default);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail_gcclike);
 	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SinglePass);
 	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultiplePasses);
-	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultipleFails);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultipleFails_default);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultipleFails_gcclike);
 
 	return suite;
 }

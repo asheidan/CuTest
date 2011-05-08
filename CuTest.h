@@ -21,6 +21,9 @@ char* CuStrCopy(const char* old);
 #define STRING_MAX		256
 #define STRING_INC		256
 
+#define FORMAT_ENVNAME "CUTEST_FORMAT"
+#define FORMAT_ENVVAL_GCCLIKE "gcclike"
+
 typedef struct
 {
 	int length;

@@ -315,6 +315,8 @@ void CuSuiteSummary(CuSuite* testSuite, CuString* summary)
 
 void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 {
+	const char * formatEnv = getenv(FORMAT_ENVNAME);
+
 	int i;
 	int failCount = 0;
 
@@ -344,9 +346,14 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 				}
 				else
 				{
-					CuStringAppendFormat(details, "%d) %s: %s:%d: %s\n",
-						failCount, testCase->name, testCase->file, testCase->line,
-						testCase->message);
+					if (formatEnv && 0==strcmp(formatEnv, FORMAT_ENVVAL_GCCLIKE))
+						CuStringAppendFormat(details, "%s:%d:%s %s\n",
+							testCase->file, testCase->line, testCase->name,
+							testCase->message);
+					else
+						CuStringAppendFormat(details, "%d) %s: %s:%d: %s\n",
+							failCount, testCase->name, testCase->file, testCase->line,
+							testCase->message);
 				}
 			}
 		}
