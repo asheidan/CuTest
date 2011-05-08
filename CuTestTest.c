@@ -307,6 +307,29 @@ void TestCuSuiteAddSuite(CuTest* tc)
 	CuAssertStrEquals(tc, "TestFails2", ts1->list[1]->name);
 	CuAssertStrEquals(tc, "TestFails3", ts1->list[2]->name);
 	CuAssertStrEquals(tc, "TestFails4", ts1->list[3]->name);
+
+	CuAssertStrEquals(tc, "TestFails3", ts2->list[0]->name);
+	CuAssertStrEquals(tc, "TestFails4", ts2->list[1]->name);
+}
+
+void TestCuSuiteMoveSuite(CuTest* tc)
+{
+	CuSuite* ts1 = CuSuiteNew();
+	CuSuite* ts2 = CuSuiteNew();
+
+	CuSuiteAdd(ts1, CuTestNew("TestFails1", zTestFails));
+	CuSuiteAdd(ts1, CuTestNew("TestFails2", zTestFails));
+
+	CuSuiteAdd(ts2, CuTestNew("TestFails3", zTestFails));
+	CuSuiteAdd(ts2, CuTestNew("TestFails4", zTestFails));
+
+	CuSuiteAddSuite(ts1, ts2);
+	CuAssertIntEquals(tc, 4, ts1->count);
+
+	CuAssertStrEquals(tc, "TestFails1", ts1->list[0]->name);
+	CuAssertStrEquals(tc, "TestFails2", ts1->list[1]->name);
+	CuAssertStrEquals(tc, "TestFails3", ts1->list[2]->name);
+	CuAssertStrEquals(tc, "TestFails4", ts1->list[3]->name);
 }
 
 void TestCuSuiteRun(CuTest* tc)
@@ -698,6 +721,7 @@ CuSuite* CuGetSuite(void)
 	SUITE_ADD_TEST(suite, TestCuSuiteNew);
 	SUITE_ADD_TEST(suite, TestCuSuiteAddTest);
 	SUITE_ADD_TEST(suite, TestCuSuiteAddSuite);
+	SUITE_ADD_TEST(suite, TestCuSuiteMoveSuite);
 	SUITE_ADD_TEST(suite, TestCuSuiteRun);
 	SUITE_ADD_TEST(suite, TestCuSuiteSummary);
 	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail);
