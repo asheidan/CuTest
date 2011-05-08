@@ -213,7 +213,7 @@ void TestCuAssertPtrEquals_Failure(CuTest* tc)
 	CuTestInit(&tc2, "MyTest", TestPasses);
 
 	/* test failing case */
-	sprintf(expected_message, "expected pointer <0x%p> but was <0x%p>", nullPtr, &x);
+	sprintf(expected_message, "expected pointer <0x%p> but was <0x%p>", (const void*)nullPtr, (const void*)&x);
 	CuAssertPtrEquals(&tc2, NULL, &x);
 	CuAssertTrue(tc, tc2.failed);
 	CompareAsserts(tc, "CuAssertPtrEquals failed", expected_message, tc2.message);
@@ -638,8 +638,8 @@ void TestAssertDblEquals(CuTest* tc)
 	CuTest *tc2 = CuTestNew("TestAssertDblEquals", zTestFails);
 	char expected[STRING_MAX];
 	char expectedMsg[STRING_MAX];
-	sprintf(expected, "expected <%lf> but was <%lf>", x, y);
-	sprintf(expectedMsg, "some text: expected <%lf> but was <%lf>", x, y);
+	sprintf(expected, "expected <%f> but was <%f>", x, y);
+	sprintf(expectedMsg, "some text: expected <%f> but was <%f>", x, y);
 
 	CuTestInit(tc2, "TestAssertDblEquals", TestPasses);
 
