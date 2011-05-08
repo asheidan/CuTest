@@ -109,6 +109,7 @@ CuSuite* CuSuiteNew(void);
 void CuSuiteDelete(CuSuite *testSuite);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
+void CuSuiteMoveSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
 void CuSuiteSummary(CuSuite* testSuite, CuString* summary);
 void CuSuiteDetails(CuSuite* testSuite, CuString* details);

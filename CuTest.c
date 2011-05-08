@@ -280,6 +280,18 @@ void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2)
 	}
 }
 
+void CuSuiteMoveSuite(CuSuite* testSuite, CuSuite* testSuite2)
+{
+	int i;
+	for (i = 0 ; i < testSuite2->count ; ++i)
+	{
+		CuTest* testCase = testSuite2->list[i];
+		CuSuiteAdd(testSuite, testCase);
+		testSuite2->list[i] = NULL;
+	}
+	CuSuiteDelete(testSuite2);
+}
+
 void CuSuiteRun(CuSuite* testSuite)
 {
 	int i;
