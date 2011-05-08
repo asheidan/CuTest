@@ -6,6 +6,10 @@
 
 #define CUTEST_VERSION  "CuTest 1.5"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* CuString */
 
 char* CuStrAlloc(int size);
@@ -112,5 +116,9 @@ void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
 void CuSuiteSummary(CuSuite* testSuite, CuString* summary);
 void CuSuiteDetails(CuSuite* testSuite, CuString* details);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CU_TEST_H */
