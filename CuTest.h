@@ -21,6 +21,9 @@ char* CuStrCopy(const char* old);
 #define STRING_MAX		256
 #define STRING_INC		256
 
+#define FORMAT_ENVNAME "CUTEST_FORMAT"
+#define FORMAT_ENVVAL_GCCLIKE "gcclike"
+
 typedef struct
 {
 	int length;
@@ -50,6 +53,8 @@ struct CuTest
 	TestFunction function;
 	int failed;
 	int ran;
+	const char* file;
+	int line;
 	const char* message;
 	jmp_buf *jumpBuf;
 };
@@ -113,6 +118,7 @@ CuSuite* CuSuiteNew(void);
 void CuSuiteDelete(CuSuite *testSuite);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
+void CuSuiteMoveSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
 void CuSuiteSummary(CuSuite* testSuite, CuString* summary);
 void CuSuiteDetails(CuSuite* testSuite, CuString* details);
