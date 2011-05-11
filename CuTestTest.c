@@ -14,8 +14,6 @@
 
 static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char* message, const char* expected, const CuTest* actual)
 {
-	const char * formatEnv = getenv(FORMAT_ENVNAME);
-
 	int mismatch;
 	if (expected == NULL || (actual == NULL && actual->message && actual->file)) {
 		mismatch = (expected != NULL || (actual != NULL &&
@@ -28,10 +26,13 @@ static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char*
 		char buf[HUGE_STRING_LEN];
 		char * matchStr = &buf[0];
 		if (actual->file)
-			if (formatEnv && 0==strcmp(formatEnv, FORMAT_ENVVAL_GCCLIKE))
+		{
+			CuPref * pref = CuPrefGetPreferences();
+			if (pref->outputFormat == CuOutputFormat_gcclike)
 				snprintf(buf, HUGE_STRING_LEN-1, "%s:%d:%s", actual->file, actual->line, actual->message);
 			else
 				snprintf(buf, HUGE_STRING_LEN-1, "%s: %s:%d", actual->message, actual->file, actual->line);
+		}
 		else
 			snprintf(buf, HUGE_STRING_LEN-1, "%s", actual->message);
 			
@@ -395,7 +396,8 @@ void TestCuSuiteDetails_SingleFail_default(CuTest* tc)
 	CuString details;
 	const char* front;
 	const char* back;
-	unsetenv(FORMAT_ENVNAME);
+	
+	CuPrefGetPreferences()->outputFormat = CuOutputFormat_default;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
@@ -429,7 +431,7 @@ void TestCuSuiteDetails_SingleFail_gcclike(CuTest* tc)
 	CuString details;
 	const char* front;
 	const char* back;
-	setenv(FORMAT_ENVNAME, FORMAT_ENVVAL_GCCLIKE, 1);
+	CuPrefGetPreferences()->outputFormat = CuOutputFormat_gcclike;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
@@ -517,7 +519,7 @@ void TestCuSuiteDetails_MultipleFails_default(CuTest* tc)
 	const char* front;
 	const char* mid;
 	const char* back;
-	unsetenv(FORMAT_ENVNAME);
+	CuPrefGetPreferences()->outputFormat = CuOutputFormat_default;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestFails1", zTestFails);
@@ -556,7 +558,7 @@ void TestCuSuiteDetails_MultipleFails_gcclike(CuTest* tc)
 	const char* front;
 	const char* mid;
 	const char* back;
-	setenv(FORMAT_ENVNAME, FORMAT_ENVVAL_GCCLIKE, 1);
+	CuPrefGetPreferences()->outputFormat = CuOutputFormat_gcclike;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestFails1", zTestFails);

@@ -64,6 +64,19 @@ CuTest* CuTestNew(const char* name, TestFunction function);
 void CuTestRun(CuTest* tc);
 void CuTestDelete(CuTest *t);
 
+/* CuPref */
+
+typedef void (*CuOutputFormat)(char* buffer, const CuTest * const tc, const int failCount);
+
+typedef struct
+{
+	CuOutputFormat     outputFormat; //detail format callback
+} CuPref;
+void CuOutputFormat_default(char* buffer, const CuTest * const testCase, const int failCount);
+void CuOutputFormat_gcclike(char* buffer, const CuTest * const testCase, const int failCount);
+
+CuPref * CuPrefGetPreferences(void);
+
 /* Internal versions of assert functions -- use the public versions */
 void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, const char* message);
 void CuAssert_Line(CuTest* tc, const char* file, int line, const char* message, int condition);
