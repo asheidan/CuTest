@@ -2,7 +2,7 @@
 CUTEST_TESTBIN := CuTest_test
 
 
-CFLAGS += -Wall -pedantic --std=c99
+CFLAGS += -Wall -pedantic -g 
 
 all: $(CUTEST_TESTBIN)
 

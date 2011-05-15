@@ -366,6 +366,38 @@ void TestCuSuiteRun(CuTest* tc)
 	CuAssertTrue(tc, ts.failCount == 2);
 }
 
+static int customProgressCallbackCounter;
+static int CustomProgressCallback(const CuTest * const tc, const int count, const int current)
+{
+	++customProgressCallbackCounter;
+	return 1;
+}
+void TestCustomProgressCallback(CuTest* tc)
+{
+	CuSuite ts;
+	CuTest tc1, tc2, tc3, tc4;
+	customProgressCallbackCounter = 0;
+	CuPrefGetPreferences()->progressCallback = CustomProgressCallback;
+
+	CuSuiteInit(&ts);
+	CuTestInit(&tc1, "TestPasses", TestPasses);
+	CuTestInit(&tc2, "TestPasses", TestPasses);
+	CuTestInit(&tc3, "TestFails",  zTestFails);
+	CuTestInit(&tc4, "TestPasses", TestPasses);
+
+	CuSuiteAdd(&ts, &tc1);
+	CuSuiteAdd(&ts, &tc2);
+	CuSuiteAdd(&ts, &tc3);
+	CuSuiteAdd(&ts, &tc4);
+	CuAssertTrue(tc, ts.count == 4);
+
+	CuSuiteRun(&ts);
+	CuAssertTrue(tc, ts.count - ts.failCount == 3);
+	CuAssertTrue(tc, ts.failCount == 1);
+	CuAssertTrue(tc, customProgressCallbackCounter == 4);
+	CuPrefGetPreferences()->progressCallback = NULL;
+}
+
 void TestCuSuiteSummary(CuTest* tc)
 {
 	CuSuite ts;
@@ -811,6 +843,7 @@ CuSuite* CuGetSuite(void)
 	SUITE_ADD_TEST(suite, TestCuSuiteAddSuite);
 	SUITE_ADD_TEST(suite, TestCuSuiteMoveSuite);
 	SUITE_ADD_TEST(suite, TestCuSuiteRun);
+	SUITE_ADD_TEST(suite, TestCustomProgressCallback);
 	SUITE_ADD_TEST(suite, TestCuSuiteSummary);
 	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail_default);
 	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail_gcclike);

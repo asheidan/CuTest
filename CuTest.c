@@ -26,7 +26,8 @@ void CuOutputFormat_gcclike(char* buffer, const CuTest * const testCase, const i
 }
 
 static CuPref cuPreferences = {
-	.outputFormat     = CuOutputFormat_default
+	.outputFormat     = CuOutputFormat_default,
+	.progressCallback = NULL
 };
 CuPref * CuPrefGetPreferences(void)
 {
@@ -320,10 +321,13 @@ void CuSuiteMoveSuite(CuSuite* testSuite, CuSuite* testSuite2)
 void CuSuiteRun(CuSuite* testSuite)
 {
 	int i;
-	for (i = 0 ; i < testSuite->count ; ++i)
+	int abortTests = 0;
+	for (i = 0 ; i < testSuite->count && !abortTests ; ++i)
 	{
 		CuTest* testCase = testSuite->list[i];
 		CuTestRun(testCase);
+		if (cuPreferences.progressCallback)
+			abortTests = !cuPreferences.progressCallback(testCase, testSuite->count, i);
 		if (testCase->failed) { testSuite->failCount += 1; }
 	}
 }

@@ -67,10 +67,12 @@ void CuTestDelete(CuTest *t);
 /* CuPref */
 
 typedef void (*CuOutputFormat)(char* buffer, const CuTest * const tc, const int failCount);
+typedef int (*CuProgressCallback)(const CuTest * const tc, const int count, const int current);
 
 typedef struct
 {
-	CuOutputFormat     outputFormat; //detail format callback
+	CuOutputFormat     outputFormat;
+	CuProgressCallback progressCallback;
 } CuPref;
 void CuOutputFormat_default(char* buffer, const CuTest * const testCase, const int failCount);
 void CuOutputFormat_gcclike(char* buffer, const CuTest * const testCase, const int failCount);
