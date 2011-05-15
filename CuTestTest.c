@@ -27,8 +27,7 @@ static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char*
 		char * matchStr = &buf[0];
 		if (actual->file)
 		{
-			CuPref * pref = CuPrefGetPreferences();
-			if (pref->outputFormat == CuOutputFormat_gcclike)
+			if (cuPreferences.outputFormat == CuOutputFormat_gcclike)
 				snprintf(buf, HUGE_STRING_LEN-1, "%s:%d:%s", actual->file, actual->line, actual->message);
 			else
 				snprintf(buf, HUGE_STRING_LEN-1, "%s: %s:%d", actual->message, actual->file, actual->line);
@@ -377,7 +376,7 @@ void TestCustomProgressCallback(CuTest* tc)
 	CuSuite ts;
 	CuTest tc1, tc2, tc3, tc4;
 	customProgressCallbackCounter = 0;
-	CuPrefGetPreferences()->progressCallback = CustomProgressCallback;
+	cuPreferences.progressCallback = CustomProgressCallback;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
@@ -395,7 +394,7 @@ void TestCustomProgressCallback(CuTest* tc)
 	CuAssertTrue(tc, ts.count - ts.failCount == 3);
 	CuAssertTrue(tc, ts.failCount == 1);
 	CuAssertTrue(tc, customProgressCallbackCounter == 4);
-	CuPrefGetPreferences()->progressCallback = NULL;
+	cuPreferences.progressCallback = NULL;
 }
 
 void TestCuSuiteSummary(CuTest* tc)
@@ -429,7 +428,7 @@ void TestCuSuiteDetails_SingleFail_default(CuTest* tc)
 	const char* front;
 	const char* back;
 	
-	CuPrefGetPreferences()->outputFormat = CuOutputFormat_default;
+	cuPreferences.outputFormat = CuOutputFormat_default;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
@@ -463,7 +462,7 @@ void TestCuSuiteDetails_SingleFail_gcclike(CuTest* tc)
 	CuString details;
 	const char* front;
 	const char* back;
-	CuPrefGetPreferences()->outputFormat = CuOutputFormat_gcclike;
+	cuPreferences.outputFormat = CuOutputFormat_gcclike;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
@@ -551,7 +550,7 @@ void TestCuSuiteDetails_MultipleFails_default(CuTest* tc)
 	const char* front;
 	const char* mid;
 	const char* back;
-	CuPrefGetPreferences()->outputFormat = CuOutputFormat_default;
+	cuPreferences.outputFormat = CuOutputFormat_default;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestFails1", zTestFails);
@@ -590,7 +589,7 @@ void TestCuSuiteDetails_MultipleFails_gcclike(CuTest* tc)
 	const char* front;
 	const char* mid;
 	const char* back;
-	CuPrefGetPreferences()->outputFormat = CuOutputFormat_gcclike;
+	cuPreferences.outputFormat = CuOutputFormat_gcclike;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestFails1", zTestFails);

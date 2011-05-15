@@ -74,10 +74,11 @@ typedef struct
 	CuOutputFormat     outputFormat;
 	CuProgressCallback progressCallback;
 } CuPref;
+
+extern CuPref cuPreferences;
+
 void CuOutputFormat_default(char* buffer, const CuTest * const testCase, const int failCount);
 void CuOutputFormat_gcclike(char* buffer, const CuTest * const testCase, const int failCount);
-
-CuPref * CuPrefGetPreferences(void);
 
 /* Internal versions of assert functions -- use the public versions */
 void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, const char* message);

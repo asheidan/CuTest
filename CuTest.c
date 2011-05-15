@@ -25,14 +25,10 @@ void CuOutputFormat_gcclike(char* buffer, const CuTest * const testCase, const i
 		testCase->message);
 }
 
-static CuPref cuPreferences = {
-	.outputFormat     = CuOutputFormat_default,
-	.progressCallback = NULL
+CuPref cuPreferences = {
+	/* .outputFormat     = */ CuOutputFormat_default,
+	/* .progressCallback = */ NULL
 };
-CuPref * CuPrefGetPreferences(void)
-{
-	return &cuPreferences;
-}
 
 /*-------------------------------------------------------------------------*
  * CuStr
@@ -375,7 +371,7 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 				else
 				{
 					char buffer[HUGE_STRING_LEN];
-					CuPrefGetPreferences()->outputFormat(buffer, testCase, failCount);
+					cuPreferences.outputFormat(buffer, testCase, failCount);
 					CuStringAppend(details, buffer);
 				}
 			}
