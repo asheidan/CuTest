@@ -12,17 +12,29 @@
 
 #define CompareAsserts(tc, message, expected, actual)  X_CompareAsserts((tc), __FILE__, __LINE__, (message), (expected), (actual))
 
-static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char* message, const char* expected, const char* actual)
+static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char* message, const char* expected, const CuTest* actual)
 {
 	int mismatch;
-	if (expected == NULL || actual == NULL) {
-		mismatch = (expected != NULL || actual != NULL);
+	if (expected == NULL || (actual == NULL && actual->message && actual->file)) {
+		mismatch = (expected != NULL || (actual != NULL &&
+			actual->message != NULL && actual->file != NULL));
 	} else {
 		const char *front = __FILE__ ":";
 		const size_t frontLen = strlen(front);
 		const size_t expectedLen = strlen(expected);
-
-		const char *matchStr = actual;
+		
+		char buf[HUGE_STRING_LEN];
+		char * matchStr = &buf[0];
+		if (actual->file)
+		{
+			if (cuPreferences.outputFormat == CuOutputFormat_gcclike)
+				snprintf(buf, HUGE_STRING_LEN-1, "%s:%d:%s", actual->file, actual->line, actual->message);
+			else
+				snprintf(buf, HUGE_STRING_LEN-1, "%s: %s:%d", actual->message, actual->file, actual->line);
+		}
+		else
+			snprintf(buf, HUGE_STRING_LEN-1, "%s", actual->message);
+			
 
 		mismatch = (strncmp(matchStr, front, frontLen) != 0);
 		if (!mismatch) {
@@ -35,7 +47,6 @@ static void X_CompareAsserts(CuTest* tc, const char *file, int line, const char*
 		}
 	}
 
-	CuAssert_Line(tc, file, line, message, !mismatch);
 }
 
 /*-------------------------------------------------------------------------*
@@ -178,15 +189,15 @@ void TestCuAssert(CuTest* tc)
 
 	CuAssert(&tc2, "test 2", 0);
 	CuAssertTrue(tc, tc2.failed);
-	CompareAsserts(tc, "CuAssert didn't fail", "test 2", tc2.message);
+	CompareAsserts(tc, "CuAssert didn't fail", "test 2", &tc2);
 
 	CuAssert(&tc2, "test 3", 1);
 	CuAssertTrue(tc, tc2.failed);
-	CompareAsserts(tc, "CuAssert didn't fail", "test 2", tc2.message);
+	CompareAsserts(tc, "CuAssert didn't fail", "test 2", &tc2);
 
 	CuAssert(&tc2, "test 4", 0);
 	CuAssertTrue(tc, tc2.failed);
-	CompareAsserts(tc, "CuAssert didn't fail", "test 4", tc2.message);
+	CompareAsserts(tc, "CuAssert didn't fail", "test 4", &tc2);
 
 }
 
@@ -216,7 +227,7 @@ void TestCuAssertPtrEquals_Failure(CuTest* tc)
 	sprintf(expected_message, "expected pointer <0x%p> but was <0x%p>", (const void*)nullPtr, (const void*)&x);
 	CuAssertPtrEquals(&tc2, NULL, &x);
 	CuAssertTrue(tc, tc2.failed);
-	CompareAsserts(tc, "CuAssertPtrEquals failed", expected_message, tc2.message);
+	CompareAsserts(tc, "CuAssertPtrEquals failed", expected_message, &tc2);
 }
 
 void TestCuAssertPtrNotNull_Success(CuTest* tc)
@@ -241,7 +252,7 @@ void TestCuAssertPtrNotNull_Failure(CuTest* tc)
 	/* test failing case */
 	CuAssertPtrNotNull(&tc2, NULL);
 	CuAssertTrue(tc, tc2.failed);
-	CompareAsserts(tc, "CuAssertPtrNotNull failed", "null pointer unexpected", tc2.message);
+	CompareAsserts(tc, "CuAssertPtrNotNull failed", "null pointer unexpected", &tc2);
 }
 
 void TestCuTestRun(CuTest* tc)
@@ -253,7 +264,7 @@ void TestCuTestRun(CuTest* tc)
 	CuAssertStrEquals(tc, "MyTest", tc2.name);
 	CuAssertTrue(tc, tc2.failed);
 	CuAssertTrue(tc, tc2.ran);
-	CompareAsserts(tc, "TestRun failed", "test should fail", tc2.message);
+	CompareAsserts(tc, "TestRun failed", "test should fail", &tc2);
 }
 
 /*-------------------------------------------------------------------------*
@@ -307,6 +318,29 @@ void TestCuSuiteAddSuite(CuTest* tc)
 	CuAssertStrEquals(tc, "TestFails2", ts1->list[1]->name);
 	CuAssertStrEquals(tc, "TestFails3", ts1->list[2]->name);
 	CuAssertStrEquals(tc, "TestFails4", ts1->list[3]->name);
+
+	CuAssertStrEquals(tc, "TestFails3", ts2->list[0]->name);
+	CuAssertStrEquals(tc, "TestFails4", ts2->list[1]->name);
+}
+
+void TestCuSuiteMoveSuite(CuTest* tc)
+{
+	CuSuite* ts1 = CuSuiteNew();
+	CuSuite* ts2 = CuSuiteNew();
+
+	CuSuiteAdd(ts1, CuTestNew("TestFails1", zTestFails));
+	CuSuiteAdd(ts1, CuTestNew("TestFails2", zTestFails));
+
+	CuSuiteAdd(ts2, CuTestNew("TestFails3", zTestFails));
+	CuSuiteAdd(ts2, CuTestNew("TestFails4", zTestFails));
+
+	CuSuiteAddSuite(ts1, ts2);
+	CuAssertIntEquals(tc, 4, ts1->count);
+
+	CuAssertStrEquals(tc, "TestFails1", ts1->list[0]->name);
+	CuAssertStrEquals(tc, "TestFails2", ts1->list[1]->name);
+	CuAssertStrEquals(tc, "TestFails3", ts1->list[2]->name);
+	CuAssertStrEquals(tc, "TestFails4", ts1->list[3]->name);
 }
 
 void TestCuSuiteRun(CuTest* tc)
@@ -329,6 +363,38 @@ void TestCuSuiteRun(CuTest* tc)
 	CuSuiteRun(&ts);
 	CuAssertTrue(tc, ts.count - ts.failCount == 2);
 	CuAssertTrue(tc, ts.failCount == 2);
+}
+
+static int customProgressCallbackCounter;
+static int CustomProgressCallback(const CuTest * const tc, const int count, const int current)
+{
+	++customProgressCallbackCounter;
+	return 1;
+}
+void TestCustomProgressCallback(CuTest* tc)
+{
+	CuSuite ts;
+	CuTest tc1, tc2, tc3, tc4;
+	customProgressCallbackCounter = 0;
+	cuPreferences.progressCallback = CustomProgressCallback;
+
+	CuSuiteInit(&ts);
+	CuTestInit(&tc1, "TestPasses", TestPasses);
+	CuTestInit(&tc2, "TestPasses", TestPasses);
+	CuTestInit(&tc3, "TestFails",  zTestFails);
+	CuTestInit(&tc4, "TestPasses", TestPasses);
+
+	CuSuiteAdd(&ts, &tc1);
+	CuSuiteAdd(&ts, &tc2);
+	CuSuiteAdd(&ts, &tc3);
+	CuSuiteAdd(&ts, &tc4);
+	CuAssertTrue(tc, ts.count == 4);
+
+	CuSuiteRun(&ts);
+	CuAssertTrue(tc, ts.count - ts.failCount == 3);
+	CuAssertTrue(tc, ts.failCount == 1);
+	CuAssertTrue(tc, customProgressCallbackCounter == 4);
+	cuPreferences.progressCallback = NULL;
 }
 
 void TestCuSuiteSummary(CuTest* tc)
@@ -354,13 +420,15 @@ void TestCuSuiteSummary(CuTest* tc)
 }
 
 
-void TestCuSuiteDetails_SingleFail(CuTest* tc)
+void TestCuSuiteDetails_SingleFail_default(CuTest* tc)
 {
 	CuSuite ts;
 	CuTest tc1, tc2;
 	CuString details;
 	const char* front;
 	const char* back;
+	
+	cuPreferences.outputFormat = CuOutputFormat_default;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestPasses", TestPasses);
@@ -378,6 +446,40 @@ void TestCuSuiteDetails_SingleFail(CuTest* tc)
 
 	front = "There was 1 failure:\n"
 		"1) TestFails: ";
+	back =  "test should fail\n"
+		"\n!!!FAILURES!!!\n"
+		"Runs: 2 Passes: 1 Fails: 1\n";
+
+	CuAssertStrEquals(tc, back, details.buffer + strlen(details.buffer) - strlen(back));
+	details.buffer[strlen(front)] = 0;
+	CuAssertStrEquals(tc, front, details.buffer);
+}
+
+void TestCuSuiteDetails_SingleFail_gcclike(CuTest* tc)
+{
+	CuSuite ts;
+	CuTest tc1, tc2;
+	CuString details;
+	const char* front;
+	const char* back;
+	cuPreferences.outputFormat = CuOutputFormat_gcclike;
+
+	CuSuiteInit(&ts);
+	CuTestInit(&tc1, "TestPasses", TestPasses);
+	CuTestInit(&tc2, "TestFails",  zTestFails);
+	CuStringInit(&details);
+
+	CuSuiteAdd(&ts, &tc1);
+	CuSuiteAdd(&ts, &tc2);
+	CuSuiteRun(&ts);
+
+	CuSuiteDetails(&ts, &details);
+
+	CuAssertTrue(tc, ts.count == 2);
+	CuAssertTrue(tc, ts.failCount == 1);
+
+	front = "There was 1 failure:\n"
+		__FILE__ ":";
 	back =  "test should fail\n"
 		"\n!!!FAILURES!!!\n"
 		"Runs: 2 Passes: 1 Fails: 1\n";
@@ -440,7 +542,7 @@ void TestCuSuiteDetails_MultiplePasses(CuTest* tc)
 	CuAssertStrEquals(tc, expected, details.buffer);
 }
 
-void TestCuSuiteDetails_MultipleFails(CuTest* tc)
+void TestCuSuiteDetails_MultipleFails_default(CuTest* tc)
 {
 	CuSuite ts;
 	CuTest tc1, tc2;
@@ -448,6 +550,7 @@ void TestCuSuiteDetails_MultipleFails(CuTest* tc)
 	const char* front;
 	const char* mid;
 	const char* back;
+	cuPreferences.outputFormat = CuOutputFormat_default;
 
 	CuSuiteInit(&ts);
 	CuTestInit(&tc1, "TestFails1", zTestFails);
@@ -468,6 +571,45 @@ void TestCuSuiteDetails_MultipleFails(CuTest* tc)
 		"1) TestFails1: ";
 	mid =   "test should fail\n"
 		"2) TestFails2: ";
+	back =  "test should fail\n"
+		"\n!!!FAILURES!!!\n"
+		"Runs: 2 Passes: 0 Fails: 2\n";
+
+	CuAssertStrEquals(tc, back, details.buffer + strlen(details.buffer) - strlen(back));
+	CuAssert(tc, "Couldn't find middle", strstr(details.buffer, mid) != NULL);
+	details.buffer[strlen(front)] = 0;
+	CuAssertStrEquals(tc, front, details.buffer);
+}
+
+void TestCuSuiteDetails_MultipleFails_gcclike(CuTest* tc)
+{
+	CuSuite ts;
+	CuTest tc1, tc2;
+	CuString details;
+	const char* front;
+	const char* mid;
+	const char* back;
+	cuPreferences.outputFormat = CuOutputFormat_gcclike;
+
+	CuSuiteInit(&ts);
+	CuTestInit(&tc1, "TestFails1", zTestFails);
+	CuTestInit(&tc2, "TestFails2", zTestFails);
+	CuStringInit(&details);
+
+	CuSuiteAdd(&ts, &tc1);
+	CuSuiteAdd(&ts, &tc2);
+	CuSuiteRun(&ts);
+
+	CuSuiteDetails(&ts, &details);
+
+	CuAssertTrue(tc, ts.count == 2);
+	CuAssertTrue(tc, ts.failCount == 2);
+
+	front =
+		"There were 2 failures:\n"
+		__FILE__ ":";
+	mid =   "test should fail\n"
+		__FILE__ ":";
 	back =  "test should fail\n"
 		"\n!!!FAILURES!!!\n"
 		"Runs: 2 Passes: 0 Fails: 2\n";
@@ -534,13 +676,13 @@ void TestAssertStrEquals(CuTest* tc)
 		CuAssertStrEquals(tc2, "hello", "world");
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals failed", expected, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals failed", expected, tc2);
 	if (setjmp(buf) == 0)
 	{
 		CuAssertStrEquals_Msg(tc2, "some text", "hello", "world");
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals failed", expectedMsg, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals failed", expectedMsg, tc2);
 }
 
 void TestAssertStrEquals_NULL(CuTest* tc)
@@ -554,13 +696,13 @@ void TestAssertStrEquals_NULL(CuTest* tc)
 		CuAssertStrEquals(tc2, NULL, NULL);
 	}
 	CuAssertTrue(tc, !tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals_NULL failed", NULL, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals_NULL failed", NULL, tc2);
 	if (setjmp(buf) == 0)
 	{
 		CuAssertStrEquals_Msg(tc2, "some text", NULL, NULL);
 	}
 	CuAssertTrue(tc, !tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals_NULL failed", NULL, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals_NULL failed", NULL, tc2);
 }
 
 void TestAssertStrEquals_FailNULLStr(CuTest* tc)
@@ -577,13 +719,13 @@ void TestAssertStrEquals_FailNULLStr(CuTest* tc)
 		CuAssertStrEquals(tc2, "hello", NULL);
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals_FailNULLStr failed", expected, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals_FailNULLStr failed", expected, tc2);
 	if (setjmp(buf) == 0)
 	{
 		CuAssertStrEquals_Msg(tc2, "some text", "hello", NULL);
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals_FailNULLStr failed", expectedMsg, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals_FailNULLStr failed", expectedMsg, tc2);
 }
 
 void TestAssertStrEquals_FailStrNULL(CuTest* tc)
@@ -600,13 +742,13 @@ void TestAssertStrEquals_FailStrNULL(CuTest* tc)
 		CuAssertStrEquals(tc2, NULL, "hello");
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals_FailStrNULL failed", expected, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals_FailStrNULL failed", expected, tc2);
 	if (setjmp(buf) == 0)
 	{
 		CuAssertStrEquals_Msg(tc2, "some text", NULL, "hello");
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals_FailStrNULL failed", expectedMsg, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals_FailStrNULL failed", expectedMsg, tc2);
 }
 
 void TestAssertIntEquals(CuTest* tc)
@@ -621,13 +763,13 @@ void TestAssertIntEquals(CuTest* tc)
 		CuAssertIntEquals(tc2, 42, 32);
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertIntEquals failed", expected, tc2->message);
+	CompareAsserts(tc, "CuAssertIntEquals failed", expected, tc2);
 	if (setjmp(buf) == 0)
 	{
 		CuAssertIntEquals_Msg(tc2, "some text", 42, 32);
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertStrEquals failed", expectedMsg, tc2->message);
+	CompareAsserts(tc, "CuAssertStrEquals failed", expectedMsg, tc2);
 }
 
 void TestAssertDblEquals(CuTest* tc)
@@ -657,14 +799,14 @@ void TestAssertDblEquals(CuTest* tc)
 		CuAssertDblEquals(tc2, x, y, 0.001);
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertDblEquals failed", expected, tc2->message);
+	CompareAsserts(tc, "CuAssertDblEquals failed", expected, tc2);
 	tc2->jumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
 		CuAssertDblEquals_Msg(tc2, "some text", x, y, 0.001);
 	}
 	CuAssertTrue(tc, tc2->failed);
-	CompareAsserts(tc, "CuAssertDblEquals failed", expectedMsg, tc2->message);
+	CompareAsserts(tc, "CuAssertDblEquals failed", expectedMsg, tc2);
 }
 
 /*-------------------------------------------------------------------------*
@@ -698,12 +840,16 @@ CuSuite* CuGetSuite(void)
 	SUITE_ADD_TEST(suite, TestCuSuiteNew);
 	SUITE_ADD_TEST(suite, TestCuSuiteAddTest);
 	SUITE_ADD_TEST(suite, TestCuSuiteAddSuite);
+	SUITE_ADD_TEST(suite, TestCuSuiteMoveSuite);
 	SUITE_ADD_TEST(suite, TestCuSuiteRun);
+	SUITE_ADD_TEST(suite, TestCustomProgressCallback);
 	SUITE_ADD_TEST(suite, TestCuSuiteSummary);
-	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail_default);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SingleFail_gcclike);
 	SUITE_ADD_TEST(suite, TestCuSuiteDetails_SinglePass);
 	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultiplePasses);
-	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultipleFails);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultipleFails_default);
+	SUITE_ADD_TEST(suite, TestCuSuiteDetails_MultipleFails_gcclike);
 
 	return suite;
 }
