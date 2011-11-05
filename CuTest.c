@@ -8,6 +8,29 @@
 #include "CuTest.h"
 
 /*-------------------------------------------------------------------------*
+ * CuPref
+ *-------------------------------------------------------------------------*/
+
+void CuOutputFormat_default(char* buffer, const CuTest * const testCase, const int failCount)
+{
+	sprintf(buffer, "%d) %s: %s:%d: %s\n",
+		failCount, testCase->name, testCase->file, testCase->line,
+		testCase->message);
+}
+
+void CuOutputFormat_gcclike(char* buffer, const CuTest * const testCase, const int failCount)
+{
+	sprintf(buffer, "%s:%d:%s %s\n",
+		testCase->file, testCase->line, testCase->name,
+		testCase->message);
+}
+
+CuPref cuPreferences = {
+	/* .outputFormat     = */ CuOutputFormat_default,
+	/* .progressCallback = */ NULL
+};
+
+/*-------------------------------------------------------------------------*
  * CuStr
  *-------------------------------------------------------------------------*/
 
@@ -114,6 +137,8 @@ void CuTestInit(CuTest* t, const char* name, TestFunction function)
 	t->name = CuStrCopy(name);
 	t->failed = 0;
 	t->ran = 0;
+	t->file = NULL;
+	t->line = 0;
 	t->message = NULL;
 	t->function = function;
 	t->jumpBuf = NULL;
@@ -147,12 +172,9 @@ void CuTestRun(CuTest* tc)
 
 static void CuFailInternal(CuTest* tc, const char* file, int line, CuString* string)
 {
-	char buf[HUGE_STRING_LEN];
-
-	sprintf(buf, "%s:%d: ", file, line);
-	CuStringInsert(string, buf, 0);
-
 	tc->failed = 1;
+	tc->file = file;
+	tc->line = line;
 	tc->message = string->buffer;
 	if (tc->jumpBuf != 0) longjmp(*(tc->jumpBuf), 0);
 }
@@ -280,13 +302,28 @@ void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2)
 	}
 }
 
+void CuSuiteMoveSuite(CuSuite* testSuite, CuSuite* testSuite2)
+{
+	int i;
+	for (i = 0 ; i < testSuite2->count ; ++i)
+	{
+		CuTest* testCase = testSuite2->list[i];
+		CuSuiteAdd(testSuite, testCase);
+		testSuite2->list[i] = NULL;
+	}
+	CuSuiteDelete(testSuite2);
+}
+
 void CuSuiteRun(CuSuite* testSuite)
 {
 	int i;
-	for (i = 0 ; i < testSuite->count ; ++i)
+	int abortTests = 0;
+	for (i = 0 ; i < testSuite->count && !abortTests ; ++i)
 	{
 		CuTest* testCase = testSuite->list[i];
 		CuTestRun(testCase);
+		if (cuPreferences.progressCallback)
+			abortTests = !cuPreferences.progressCallback(testCase, testSuite->count, i);
 		if (testCase->failed) { testSuite->failCount += 1; }
 	}
 }
@@ -326,8 +363,17 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 			if (testCase->failed)
 			{
 				failCount++;
-				CuStringAppendFormat(details, "%d) %s: %s\n",
-					failCount, testCase->name, testCase->message);
+				if (NULL == testCase->file)
+				{
+					CuStringAppendFormat(details, "%d) %s: %s\n",
+						failCount, testCase->name, testCase->message);
+				}
+				else
+				{
+					char buffer[HUGE_STRING_LEN];
+					cuPreferences.outputFormat(buffer, testCase, failCount);
+					CuStringAppend(details, buffer);
+				}
 			}
 		}
 		CuStringAppend(details, "\n!!!FAILURES!!!\n");

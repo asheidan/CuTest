@@ -21,6 +21,9 @@ char* CuStrCopy(const char* old);
 #define STRING_MAX		256
 #define STRING_INC		256
 
+#define FORMAT_ENVNAME "CUTEST_FORMAT"
+#define FORMAT_ENVVAL_GCCLIKE "gcclike"
+
 typedef struct
 {
 	int length;
@@ -50,6 +53,8 @@ struct CuTest
 	TestFunction function;
 	int failed;
 	int ran;
+	const char* file;
+	int line;
 	const char* message;
 	jmp_buf *jumpBuf;
 };
@@ -58,6 +63,22 @@ void CuTestInit(CuTest* t, const char* name, TestFunction function);
 CuTest* CuTestNew(const char* name, TestFunction function);
 void CuTestRun(CuTest* tc);
 void CuTestDelete(CuTest *t);
+
+/* CuPref */
+
+typedef void (*CuOutputFormat)(char* buffer, const CuTest * const tc, const int failCount);
+typedef int (*CuProgressCallback)(const CuTest * const tc, const int count, const int current);
+
+typedef struct
+{
+	CuOutputFormat     outputFormat;
+	CuProgressCallback progressCallback;
+} CuPref;
+
+extern CuPref cuPreferences;
+
+void CuOutputFormat_default(char* buffer, const CuTest * const testCase, const int failCount);
+void CuOutputFormat_gcclike(char* buffer, const CuTest * const testCase, const int failCount);
 
 /* Internal versions of assert functions -- use the public versions */
 void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, const char* message);
@@ -113,6 +134,7 @@ CuSuite* CuSuiteNew(void);
 void CuSuiteDelete(CuSuite *testSuite);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
+void CuSuiteMoveSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
 void CuSuiteSummary(CuSuite* testSuite, CuString* summary);
 void CuSuiteDetails(CuSuite* testSuite, CuString* details);
